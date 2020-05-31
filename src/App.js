@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import Controls from "./utils/controls"
 import logo from './logo.svg';
 import './App.css';
 
@@ -25,9 +26,9 @@ class App extends Component {
     this.addCustomSceneObjects();
     this.loader.load(
       './resources/models/Tugboat.gltf', 
-      this.loadModels, 
+      this.loadModels,
       (xhr)=> {
-        console.log( xhr.loaded, xhr.total);
+        console.log( "loading progess", xhr.loaded, xhr.total);
       },
       (error) => {console.log("model loading error");
       });
@@ -55,10 +56,11 @@ class App extends Component {
       0.1, // near plane
       1000 // far plane
     );
-    this.camera.position.set(5, 10, 5); // is used here to set some distance from a cube that is located at z = 0
+    this.camera.position.set(5, 10, 5);
     // OrbitControls allow a camera to orbit around the object
     // https://threejs.org/docs/#examples/controls/OrbitControls
-    this.controls = new OrbitControls(this.camera, this.el);
+    // this.controls = new OrbitControls(this.camera, this.el);
+    this.controls = new Controls(this.scene.getObjectByName("boat"), this.camera, this.el);
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(width, height);
     this.el.appendChild(this.renderer.domElement); // mount using React ref
@@ -94,15 +96,21 @@ class App extends Component {
     const skyColor = 0x87CEFA;
     const hemiLight = new THREE.HemisphereLight(skyColor, seaColor, 1);
     this.scene.add(hemiLight);
+
+    /*
+      Other
+    */
+    const axesHelper = new THREE.AxesHelper(10);
+    this.scene.add(axesHelper);
   };
 
   loadModels = (gltf) => {
+    gltf.scene.name = "boat";
     this.scene.add(gltf.scene);
   }
 
   startAnimationLoop = () => {
-    // this.cube.rotation.x += 0.01;
-    // this.cube.rotation.y += 0.01;
+
 
     this.renderer.render(this.scene, this.camera);
 
@@ -125,31 +133,9 @@ class App extends Component {
   };
 
   render() {
-    return <div style={style} ref={ref => (this.el = ref)} />;
+    return <div style={style} ref={ref => (this.el = ref)} tabIndex="-1"/>;
   }
 }
 
-/*
-class Container extends React.Component {
-  state = { isMounted: true };
-
-  render() {
-    const { isMounted = true } = this.state;
-    return (
-      <>
-        <button
-          onClick={() =>
-            this.setState(state => ({ isMounted: !state.isMounted }))
-          }
-        >
-          {isMounted ? "Unmount" : "Mount"}
-        </button>
-        {isMounted && <App />}
-        {isMounted && <div>Scroll to zoom, drag to rotate</div>}
-      </>
-    );
-  }
-}
-*/
 
 export default App;
