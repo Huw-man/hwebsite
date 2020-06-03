@@ -24,14 +24,6 @@ class App extends Component {
   componentDidMount() {
     this.sceneSetup();
     this.addCustomSceneObjects();
-    this.loader.load(
-      './resources/models/Tugboat.gltf', 
-      this.loadModels,
-      (xhr)=> {
-        console.log( "loading progess", xhr.loaded, xhr.total);
-      },
-      (error) => {console.log("model loading error");
-      });
     this.startAnimationLoop();
     window.addEventListener("resize", this.handleWindowResize);
   }
@@ -42,8 +34,6 @@ class App extends Component {
     this.controls.dispose();
   }
 
-  // Standard scene setup in Three.js. Check "Creating a scene" manual for more information
-  // https://threejs.org/docs/#manual/en/introduction/Creating-a-scene
   sceneSetup = () => {
     // get container dimensions and use them for scene sizing
     const width = this.el.clientWidth;
@@ -56,19 +46,13 @@ class App extends Component {
       0.1, // near plane
       1000 // far plane
     );
-    this.camera.position.set(5, 10, 5);
-    // OrbitControls allow a camera to orbit around the object
-    // https://threejs.org/docs/#examples/controls/OrbitControls
+    this.camera.position.set(10, 20, 10);
     // this.controls = new OrbitControls(this.camera, this.el);
-    this.controls = new Controls(this.scene.getObjectByName("boat"), this.camera, this.el);
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(width, height);
     this.el.appendChild(this.renderer.domElement); // mount using React ref
   };
 
-  // Here should come custom code.
-  // Code below is taken from Three.js BoxGeometry example
-  // https://threejs.org/docs/#api/en/geometries/BoxGeometry
   addCustomSceneObjects = () => {
     /*
       Models
@@ -80,16 +64,18 @@ class App extends Component {
     const planeMesh = new THREE.Mesh(planeGeo, planeMat);
     planeMesh.rotateX(-Math.PI / 2.0);
     this.scene.add(planeMesh);
-    // const geometry = new THREE.BoxGeometry(2, 2, 2);
-    // const material = new THREE.MeshPhongMaterial({
-    //   color: 0x156289,
-    //   emissive: 0x072534,
-    //   side: THREE.DoubleSide,
-    //   flatShading: true
-    // });
-    // this.cube = new THREE.Mesh(geometry, material);
-    // this.scene.add(this.cube);
 
+    // load model
+    this.loader.load(
+      './resources/models/Tugboat.gltf', 
+      this.loadModels,
+      (xhr)=> {
+        console.log( "loading progess", xhr.loaded, xhr.total);
+      },
+      (error) => {console.log("model loading error");
+      });
+
+    
     /*
       Lights
     */
@@ -107,11 +93,13 @@ class App extends Component {
   loadModels = (gltf) => {
     gltf.scene.name = "boat";
     this.scene.add(gltf.scene);
+    this.controls = new Controls(this.scene.getObjectByName("boat"), this.camera, this.el);
   }
 
   startAnimationLoop = () => {
-
-
+    if (this.controls) {
+      this.controls.update();
+    }
     this.renderer.render(this.scene, this.camera);
 
     // The window.requestAnimationFrame() method tells the browser that you wish to perform
