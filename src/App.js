@@ -4,7 +4,11 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { BufferGeometryUtils } from "three/examples/jsm/utils/BufferGeometryUtils";
 import Controls from "./utils/controls"
+import WaveMaterial from "./materials/Waves.js"
+
+
 import logo from './logo.svg';
 import './App.css';
 
@@ -47,7 +51,7 @@ class App extends Component {
       1000 // far plane
     );
     this.camera.position.set(10, 20, 10);
-    // this.controls = new OrbitControls(this.camera, this.el);
+    this.controls = new OrbitControls(this.camera, this.el);
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(width, height);
     this.el.appendChild(this.renderer.domElement); // mount using React ref
@@ -57,13 +61,21 @@ class App extends Component {
     /*
       Models
     */
-    const planeSize = 1000;
+    const planeSize = 100;
     const seaColor = 0x4db8ff
-    const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
-    const planeMat = new THREE.MeshLambertMaterial({color: seaColor});
-    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
-    planeMesh.rotateX(-Math.PI / 2.0);
-    this.scene.add(planeMesh);
+    const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize, 10, 10);
+    BufferGeometryUtils.computeTangents(planeGeo);
+    // const planeMat = new THREE.MeshLambertMaterial({
+    //   wireframe: true, 
+    //   color: seaColor
+    // });
+    const planeMat = new WaveMaterial();
+    planeMat.needsUpdate = true;
+    
+    this.planeMesh = new THREE.Mesh(planeGeo, planeMat);
+    this.planeMesh.rotateX(-Math.PI / 2.0);
+    this.planeMesh.updateMatrix();
+    this.scene.add(this.planeMesh);
 
     // load model
     this.loader.load(
@@ -73,7 +85,7 @@ class App extends Component {
         console.log( "loading progess", xhr.loaded, xhr.total);
       },
       (error) => {console.log("model loading error");
-      });
+    });
 
     
     /*
@@ -93,14 +105,19 @@ class App extends Component {
   loadModels = (gltf) => {
     gltf.scene.name = "boat";
     this.scene.add(gltf.scene);
-    this.controls = new Controls(this.scene.getObjectByName("boat"), this.camera, this.el);
+    // this.controls = new Controls(this.scene.getObjectByName("boat"), this.camera, this.el);
   }
 
-  startAnimationLoop = () => {
+  /**
+   * ANIMATION LOOP
+   */
+  startAnimationLoop = (currentTime) => {
     if (this.controls) {
       this.controls.update();
     }
     this.renderer.render(this.scene, this.camera);
+
+    this.planeMesh.material.uniforms.time.value = currentTime;
 
     // The window.requestAnimationFrame() method tells the browser that you wish to perform
     // an animation and requests that the browser call a specified function
